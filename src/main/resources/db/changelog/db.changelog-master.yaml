@@ -1,0 +1,22 @@
+databaseChangeLog:
+  - include:
+      file: db/changelog/001-create-enums.sql
+      relativeToChangelogFile: false
+  - include:
+      file: db/changelog/002-create-members.sql
+      relativeToChangelogFile: false
+  - include:
+      file: db/changelog/003-create-refresh-tokens.sql
+      relativeToChangelogFile: false
+  - include:
+      file: db/changelog/004-create-credits.sql
+      relativeToChangelogFile: false
+  - include:
+      file: db/changelog/005-create-payments.sql
+      relativeToChangelogFile: false
+  - include:
+      file: db/changelog/006-create-jobs.sql
+      relativeToChangelogFile: false
+  - include:
+      file: db/changelog/007-create-credit-logs.sql
+      relativeToChangelogFile: false
