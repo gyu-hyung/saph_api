@@ -2,6 +2,8 @@ server:
   port: 8080
 
 spring:
+  profiles:
+    active: local
   r2dbc:
     url: r2dbc:postgresql://postgres:5432/saph
     username: saph

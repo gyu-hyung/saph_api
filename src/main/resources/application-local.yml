@@ -1,0 +1,22 @@
+# 로컬 개발 프로파일 — 인프라는 Docker, 앱은 로컬 실행
+# 실행 방법: SPRING_PROFILES_ACTIVE=local ./gradlew bootRun
+spring:
+  r2dbc:
+    url: r2dbc:postgresql://localhost:5432/saph
+    username: saph
+    password: saph
+
+  liquibase:
+    url: jdbc:postgresql://localhost:5432/saph
+    user: saph
+    password: saph
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+app:
+  storage:
+    videos-dir: ${STORAGE_BASE_DIR:./storage}/videos
+    results-dir: ${STORAGE_BASE_DIR:./storage}/results
