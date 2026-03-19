@@ -3,8 +3,7 @@ package com.saph.api.video.service
 import com.saph.api.common.ApiException
 import com.saph.api.config.AppProperties
 import com.saph.api.video.dto.UploadResponse
-import kotlinx.coroutines.reactive.awaitFirst
-import kotlinx.coroutines.reactor.awaitSingle
+import kotlinx.coroutines.reactor.awaitSingleOrNull
 import org.springframework.core.io.buffer.DataBufferUtils
 import org.springframework.http.codec.multipart.FilePart
 import org.springframework.stereotype.Service
@@ -14,6 +13,7 @@ import java.nio.file.StandardOpenOption
 import java.util.UUID
 import kotlin.io.path.exists
 import kotlin.io.path.fileSize
+import kotlin.io.path.listDirectoryEntries
 import kotlin.math.ceil
 import kotlin.math.roundToInt
 
@@ -54,7 +54,7 @@ class VideoService(
             StandardOpenOption.CREATE,
             StandardOpenOption.WRITE,
             StandardOpenOption.TRUNCATE_EXISTING,
-        ).awaitFirst()
+        ).then().awaitSingleOrNull()
 
         // Check file size after save
         val fileSize = targetPath.fileSize()
@@ -83,11 +83,28 @@ class VideoService(
         return UploadResponse(
             videoId = videoId,
             originalName = originalName,
-            videoPath = targetPath.toString(),
+            videoPath = targetPath.toAbsolutePath().toString(),
             durationSec = durationSec,
             requiredCreditMin = requiredCreditMin,
             fileSizeMB = (fileSizeMB * 100).roundToInt() / 100.0,
         )
+    }
+
+    fun findVideoPath(videoId: String): String {
+        val videosDir = Path.of(appProperties.storage.videosDir)
+        if (!videosDir.exists()) {
+            throw ApiException.badRequest("VIDEO_NOT_FOUND", "Video directory not found")
+        }
+
+        val matchingFiles = videosDir.listDirectoryEntries()
+            .filter { it.fileName.toString().startsWith(videoId) }
+            .filter { it.fileName.toString().substringAfterLast('.', "").lowercase() in ALLOWED_EXTENSIONS }
+
+        if (matchingFiles.isEmpty()) {
+            throw ApiException.badRequest("VIDEO_NOT_FOUND", "Video not found: $videoId")
+        }
+
+        return matchingFiles.first().toAbsolutePath().toString()
     }
 
     fun ffprobe(filePath: String): Int {

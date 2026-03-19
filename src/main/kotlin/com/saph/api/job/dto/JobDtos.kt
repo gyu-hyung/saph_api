@@ -5,8 +5,8 @@ import jakarta.validation.constraints.NotBlank
 import java.time.LocalDateTime
 
 data class TranslateRequest(
-    @field:NotBlank(message = "videoPath is required")
-    val videoPath: String,
+    @field:NotBlank(message = "videoId is required")
+    val videoId: String,
 
     val sourceLang: String = "auto",
 

@@ -70,6 +70,10 @@ class AuthService(
             .awaitSingleOrNull()
             ?: throw ApiException.unauthorized("INVALID_CREDENTIALS", "Invalid email or password")
 
+        val d = passwordEncoder.encode(request.password)
+
+        println("d = ${d}")
+
         when (member.status) {
             MemberStatus.BLOCKED -> throw ApiException.forbidden("ACCOUNT_BLOCKED", "Account is blocked")
             MemberStatus.WITHDRAWN -> throw ApiException.forbidden("ACCOUNT_WITHDRAWN", "Account has been withdrawn")

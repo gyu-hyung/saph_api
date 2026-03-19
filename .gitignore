@@ -24,3 +24,6 @@ Thumbs.db
 # Local environment
 .env
 .env.local
+
+# Storage (shared volume)
+storage/

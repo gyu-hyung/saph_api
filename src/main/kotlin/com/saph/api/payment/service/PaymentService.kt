@@ -11,7 +11,6 @@ import com.saph.api.payment.dto.PurchaseResponse
 import com.saph.api.payment.repository.PaymentRepository
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
-import org.springframework.r2dbc.core.DatabaseClient
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
@@ -21,7 +20,6 @@ import java.util.UUID
 class PaymentService(
     private val paymentRepository: PaymentRepository,
     private val creditService: CreditService,
-    private val databaseClient: DatabaseClient,
 ) {
 
     fun getPackages(): List<PackageInfo> {
@@ -48,7 +46,7 @@ class PaymentService(
         paymentRepository.save(
             Payment(
                 memberId = memberId,
-                packageType = packageType,
+                packageType = packageType.name,
                 creditAmount = packageType.creditMin,
                 price = packageType.price,
                 status = PaymentStatus.READY,
@@ -73,42 +71,22 @@ class PaymentService(
             throw ApiException.conflict("ALREADY_CONFIRMED", "Payment is already in status: ${payment.status}")
         }
 
+        val now = LocalDateTime.now()
+
         if (payment.price != amount) {
-            // Update payment to FAILED
-            databaseClient.sql(
-                """
-                UPDATE payments
-                SET status = 'FAILED', failed_reason = :reason, updated_at = :updatedAt
-                WHERE id = :id
-                """
-            )
-                .bind("reason", "Amount mismatch: expected ${payment.price}, got $amount")
-                .bind("updatedAt", LocalDateTime.now())
-                .bind("id", payment.id!!)
-                .fetch()
-                .rowsUpdated()
-                .awaitSingle()
+            paymentRepository.save(
+                payment.copy(status = PaymentStatus.FAILED, failedReason = "Amount mismatch: expected ${payment.price}, got $amount", updatedAt = now)
+            ).awaitSingle()
 
             throw ApiException.badRequest("AMOUNT_MISMATCH", "Payment amount does not match: expected ${payment.price} but got $amount")
         }
 
         // Update payment to DONE
-        databaseClient.sql(
-            """
-            UPDATE payments
-            SET status = 'DONE', pg_payment_key = :paymentKey, paid_at = :paidAt, updated_at = :updatedAt
-            WHERE id = :id
-            """
-        )
-            .bind("paymentKey", paymentKey)
-            .bind("paidAt", LocalDateTime.now())
-            .bind("updatedAt", LocalDateTime.now())
-            .bind("id", payment.id!!)
-            .fetch()
-            .rowsUpdated()
-            .awaitSingle()
+        paymentRepository.save(
+            payment.copy(status = PaymentStatus.DONE, pgPaymentKey = paymentKey, paidAt = now, updatedAt = now)
+        ).awaitSingle()
 
-        val newBalance = creditService.charge(payment.memberId, payment.creditAmount, payment.id)
+        val newBalance = creditService.charge(payment.memberId, payment.creditAmount, payment.id!!)
 
         return ConfirmResponse(
             creditBalance = newBalance,

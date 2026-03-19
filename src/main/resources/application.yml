@@ -4,6 +4,12 @@ server:
 spring:
   profiles:
     active: local
+  codec:
+    max-in-memory-size: 10MB
+  webflux:
+    multipart:
+      max-file-size: 500MB
+      max-request-size: 500MB
   r2dbc:
     url: r2dbc:postgresql://postgres:5432/saph
     username: saph
@@ -28,5 +34,5 @@ app:
     refresh-token-expiry-ms: 2592000000  # 30일
 
   storage:
-    videos-dir: /storage/videos
-    results-dir: /storage/results
+    videos-dir: ../../../../storage/videos
+    results-dir: ../../../../storage/results

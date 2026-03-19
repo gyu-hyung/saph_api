@@ -15,11 +15,12 @@ class JwtAuthFilter(private val jwtProvider: JwtProvider) : WebFilter {
     override fun filter(exchange: ServerWebExchange, chain: WebFilterChain): Mono<Void> {
         val authHeader = exchange.request.headers.getFirst("Authorization")
 
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return chain.filter(exchange)
-        }
-
-        val token = authHeader.removePrefix("Bearer ").trim()
+        val token = when {
+            authHeader != null && authHeader.startsWith("Bearer ") ->
+                authHeader.removePrefix("Bearer ").trim()
+            else ->
+                exchange.request.queryParams.getFirst("token")?.trim()
+        } ?: return chain.filter(exchange)
         val memberId = jwtProvider.validateAndGetMemberId(token)
             ?: return chain.filter(exchange)
 

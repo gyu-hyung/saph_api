@@ -38,6 +38,7 @@ import kotlin.math.ceil
 class JobService(
     private val jobRepository: JobRepository,
     private val creditService: CreditService,
+    private val videoService: com.saph.api.video.service.VideoService,
     private val redisTemplate: ReactiveRedisTemplate<String, String>,
     private val redisListenerContainer: ReactiveRedisMessageListenerContainer,
     private val objectMapper: ObjectMapper,
@@ -45,14 +46,12 @@ class JobService(
 
     @Transactional
     suspend fun translate(memberId: Long, request: TranslateRequest): TranslateResponse {
-        // Validate file exists
-        val videoFile = Path.of(request.videoPath)
-        if (!videoFile.exists()) {
-            throw ApiException.badRequest("VIDEO_NOT_FOUND", "Video file not found: ${request.videoPath}")
-        }
+        // Find video path by videoId
+        val videoPath = videoService.findVideoPath(request.videoId)
+        val videoFile = Path.of(videoPath)
 
         // Get duration via ffprobe
-        val durationSec = ffprobe(request.videoPath)
+        val durationSec = ffprobe(videoPath)
         val requiredMinutes = ceil(durationSec / 60.0).toInt()
 
         // Deduct credits - this uses SELECT FOR UPDATE inside
@@ -63,7 +62,7 @@ class JobService(
             Job(
                 memberId = memberId,
                 status = JobStatus.CREATED,
-                videoPath = request.videoPath,
+                videoPath = videoPath,
                 originalName = originalName,
                 videoDuration = durationSec,
                 creditUsed = requiredMinutes,
@@ -89,7 +88,7 @@ class JobService(
                     streamKey,
                     mapOf(
                         "jobId" to job.id.toString(),
-                        "videoPath" to request.videoPath,
+                        "videoPath" to videoPath,
                         "sourceLang" to request.sourceLang,
                         "targetLang" to request.targetLang,
                     )

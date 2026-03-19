@@ -14,7 +14,7 @@ data class Payment(
     val memberId: Long,
 
     @Column("package_type")
-    val packageType: PackageType,
+    val packageType: String,
 
     @Column("credit_amount")
     val creditAmount: Int,

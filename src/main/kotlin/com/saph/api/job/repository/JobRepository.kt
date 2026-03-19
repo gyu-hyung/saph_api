@@ -12,6 +12,6 @@ interface JobRepository : ReactiveCrudRepository<Job, Long> {
 
     fun findByMemberIdOrderByCreatedAtDesc(memberId: Long): Flux<Job>
 
-    @Query("SELECT COUNT(*) FROM jobs WHERE status = 'QUEUED'::job_status AND id < :jobId")
+    @Query("SELECT COUNT(*) FROM jobs WHERE status = 'QUEUED' AND id < :jobId")
     fun countQueuedBefore(jobId: Long): Mono<Long>
 }
