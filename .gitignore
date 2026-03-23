@@ -25,5 +25,8 @@ Thumbs.db
 .env
 .env.local
 
+ # Firebase service account key
+**/firebase-service-account.json
+
 # Storage (shared volume)
 storage/

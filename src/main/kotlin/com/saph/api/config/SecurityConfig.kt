@@ -1,6 +1,6 @@
 package com.saph.api.config
 
-import com.saph.api.auth.security.JwtAuthFilter
+import com.saph.api.auth.security.FirebaseAuthFilter
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpStatus
@@ -16,7 +16,7 @@ import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource
 @Configuration
 @EnableWebFluxSecurity
 class SecurityConfig(
-    private val jwtAuthFilter: JwtAuthFilter,
+    private val firebaseAuthFilter: FirebaseAuthFilter,
 ) {
 
     @Bean
@@ -36,12 +36,12 @@ class SecurityConfig(
             }
             .authorizeExchange { auth ->
                 auth
-                    .pathMatchers("/api/auth/**").permitAll()
+                    .pathMatchers("/api/auth/register").permitAll()
                     .pathMatchers("/api/credits/packages").permitAll()
                     .pathMatchers("/api/credits/purchase/confirm").permitAll()
                     .anyExchange().authenticated()
             }
-            .addFilterAt(jwtAuthFilter, SecurityWebFiltersOrder.AUTHENTICATION)
+            .addFilterAt(firebaseAuthFilter, SecurityWebFiltersOrder.AUTHENTICATION)
             .build()
     }
 

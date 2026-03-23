@@ -16,6 +16,10 @@ spring:
       host: localhost
       port: 6379
 
+firebase:
+  credentials:
+    path: classpath:firebase-service-account.json
+
 app:
   storage:
     videos-dir: ${STORAGE_BASE_DIR:./storage}/videos

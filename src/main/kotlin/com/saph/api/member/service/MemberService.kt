@@ -1,16 +1,18 @@
 package com.saph.api.member.service
 
+import com.google.firebase.auth.FirebaseAuth
 import com.saph.api.auth.repository.MemberRepository
-import com.saph.api.auth.repository.RefreshTokenRepository
 import com.saph.api.common.ApiException
 import com.saph.api.config.AppProperties
 import com.saph.api.credit.repository.CreditRepository
 import com.saph.api.job.repository.JobRepository
 import com.saph.api.member.dto.MemberResponse
 import com.saph.api.member.dto.WithdrawResponse
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
+import kotlinx.coroutines.withContext
 import org.springframework.r2dbc.core.DatabaseClient
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -22,7 +24,6 @@ import kotlin.io.path.exists
 @Service
 class MemberService(
     private val memberRepository: MemberRepository,
-    private val refreshTokenRepository: RefreshTokenRepository,
     private val creditRepository: CreditRepository,
     private val jobRepository: JobRepository,
     private val databaseClient: DatabaseClient,
@@ -50,11 +51,17 @@ class MemberService(
         val member = memberRepository.findById(memberId).awaitSingleOrNull()
             ?: throw ApiException.notFound("MEMBER_NOT_FOUND", "Member not found")
 
-        // Update member status to WITHDRAWN and null out PII
+        // Revoke Firebase refresh tokens before nulling firebase_uid
+        member.firebaseUid?.let { uid ->
+            withContext(Dispatchers.IO) {
+                runCatching { FirebaseAuth.getInstance().revokeRefreshTokens(uid) }
+            }
+        }
+
         databaseClient.sql(
             """
             UPDATE members
-            SET status = 'WITHDRAWN', email = NULL, password = NULL,
+            SET status = 'WITHDRAWN', email = NULL, password = NULL, firebase_uid = NULL,
                 nickname = NULL, deleted_at = :deletedAt, updated_at = :updatedAt
             WHERE id = :id
             """
@@ -66,10 +73,6 @@ class MemberService(
             .rowsUpdated()
             .awaitSingle()
 
-        // Delete all refresh tokens for this member
-        refreshTokenRepository.deleteByMemberId(memberId).awaitSingleOrNull()
-
-        // Delete stored files for member's jobs
         deleteStorageFilesForMember(memberId)
 
         return WithdrawResponse(message = "Account successfully withdrawn")
@@ -81,14 +84,12 @@ class MemberService(
             .awaitSingle()
 
         for (job in jobs) {
-            // Delete video file
             job.videoPath?.let { path ->
                 try {
                     val file = Path.of(path)
                     if (file.exists()) Files.deleteIfExists(file)
                 } catch (_: Exception) {}
             }
-            // Delete SRT files
             job.originalSrt?.let { path ->
                 try {
                     val file = Path.of(path)

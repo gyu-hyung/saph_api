@@ -10,6 +10,9 @@ data class Member(
     @Id
     val id: Long? = null,
 
+    @Column("firebase_uid")
+    val firebaseUid: String? = null,
+
     @Column("email")
     val email: String? = null,
 
