@@ -19,6 +19,11 @@ class FirebaseAuthFilter(private val memberRepository: MemberRepository) : WebFi
     override fun filter(exchange: ServerWebExchange, chain: WebFilterChain): Mono<Void> {
         val token = extractToken(exchange) ?: return chain.filter(exchange)
 
+        // chain.filter() returns Mono<Void> which always completes empty.
+        // Using switchIfEmpty(chain.filter()) would fire on every request (even after
+        // successful auth) because Mono<Void> never emits an item.
+        // Fix: wrap each branch in thenReturn(Unit) so switchIfEmpty only fires when
+        // auth is absent, then convert back to Mono<Void> with then().
         return Mono.fromCallable { FirebaseAuth.getInstance().verifyIdToken(token) }
             .subscribeOn(Schedulers.boundedElastic())
             .flatMap { decodedToken ->
@@ -32,12 +37,14 @@ class FirebaseAuthFilter(private val memberRepository: MemberRepository) : WebFi
                         )
                     }
             }
+            .onErrorResume { Mono.empty() }
             .flatMap { auth ->
                 chain.filter(exchange)
                     .contextWrite(ReactiveSecurityContextHolder.withAuthentication(auth))
+                    .thenReturn(Unit)
             }
-            .switchIfEmpty(chain.filter(exchange))
-            .onErrorResume { chain.filter(exchange) }
+            .switchIfEmpty(chain.filter(exchange).thenReturn(Unit))
+            .then()
     }
 
     private fun extractToken(exchange: ServerWebExchange): String? {
