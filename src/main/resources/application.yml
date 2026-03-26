@@ -11,15 +11,15 @@ spring:
       max-file-size: 500MB
       max-request-size: 500MB
   r2dbc:
-    url: r2dbc:postgresql://postgres:5432/saph
-    username: saph
-    password: saph
+    url: r2dbc:postgresql://postgres:5432/bako
+    username: bako
+    password: bako
 
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yaml
-    url: jdbc:postgresql://postgres:5432/saph
-    user: saph
-    password: saph
+    url: jdbc:postgresql://postgres:5432/bako
+    user: bako
+    password: bako
     enabled: true
 
   data:

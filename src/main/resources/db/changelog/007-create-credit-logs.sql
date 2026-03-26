@@ -1,5 +1,5 @@
 -- liquibase formatted sql
--- changeset saph:007-create-credit-logs
+-- changeset bako:007-create-credit-logs
 
 CREATE TABLE IF NOT EXISTS credit_logs (
     id              BIGSERIAL       PRIMARY KEY,

@@ -1,5 +1,5 @@
 -- liquibase formatted sql
--- changeset saph:001-create-enums
+-- changeset bako:001-create-enums
 
 DO $$ BEGIN
     CREATE TYPE job_status AS ENUM (

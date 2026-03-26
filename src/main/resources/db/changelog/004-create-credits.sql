@@ -1,5 +1,5 @@
 -- liquibase formatted sql
--- changeset saph:004-create-credits
+-- changeset bako:004-create-credits
 
 CREATE TABLE IF NOT EXISTS credits (
     id          BIGSERIAL   PRIMARY KEY,

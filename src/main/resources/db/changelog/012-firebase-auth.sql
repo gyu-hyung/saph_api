@@ -1,5 +1,5 @@
 -- liquibase formatted sql
--- changeset saph:012-firebase-auth
+-- changeset bako:012-firebase-auth
 
 -- Add firebase_uid to members
 ALTER TABLE members ADD COLUMN IF NOT EXISTS firebase_uid VARCHAR(128);

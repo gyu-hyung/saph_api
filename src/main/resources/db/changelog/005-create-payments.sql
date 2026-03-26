@@ -1,5 +1,5 @@
 -- liquibase formatted sql
--- changeset saph:005-create-payments
+-- changeset bako:005-create-payments
 
 CREATE TABLE IF NOT EXISTS payments (
     id              BIGSERIAL       PRIMARY KEY,

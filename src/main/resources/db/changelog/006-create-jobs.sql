@@ -1,5 +1,5 @@
 -- liquibase formatted sql
--- changeset saph:006-create-jobs
+-- changeset bako:006-create-jobs
 
 CREATE TABLE IF NOT EXISTS jobs (
     id              BIGSERIAL       PRIMARY KEY,

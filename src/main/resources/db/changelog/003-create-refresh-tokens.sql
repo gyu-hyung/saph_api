@@ -1,5 +1,5 @@
 -- liquibase formatted sql
--- changeset saph:003-create-refresh-tokens
+-- changeset bako:003-create-refresh-tokens
 
 CREATE TABLE IF NOT EXISTS refresh_tokens (
     id          BIGSERIAL       PRIMARY KEY,

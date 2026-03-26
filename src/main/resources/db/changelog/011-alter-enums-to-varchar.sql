@@ -1,5 +1,5 @@
 -- liquibase formatted sql
--- changeset saph:011-alter-enums-to-varchar
+-- changeset bako:011-alter-enums-to-varchar
 
 -- jobs.status: drop partial index and default before type change
 DROP INDEX IF EXISTS idx_jobs_status;

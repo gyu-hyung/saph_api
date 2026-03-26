@@ -1,5 +1,5 @@
 -- liquibase formatted sql
--- changeset saph:002-create-members
+-- changeset bako:002-create-members
 
 CREATE TABLE IF NOT EXISTS members (
     id          BIGSERIAL       PRIMARY KEY,

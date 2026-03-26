@@ -17,7 +17,7 @@ Kotlin + Spring Boot API 서버. 인증·결제·크레딧·영상 업로드·Jo
 ## 패키지 구조
 
 ```
-com.saph.api
+com.bako.api
 ├── auth/       # 회원가입, 로그인, JWT 발급·갱신
 ├── member/     # 내 정보 조회, 회원 탈퇴
 ├── credit/     # 크레딧 잔액 조회·차감·충전

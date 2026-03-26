@@ -2,14 +2,14 @@
 # 실행 방법: SPRING_PROFILES_ACTIVE=local ./gradlew bootRun
 spring:
   r2dbc:
-    url: r2dbc:postgresql://localhost:5432/saph
-    username: saph
-    password: saph
+    url: r2dbc:postgresql://localhost:5432/bako
+    username: bako
+    password: bako
 
   liquibase:
-    url: jdbc:postgresql://localhost:5432/saph
-    user: saph
-    password: saph
+    url: jdbc:postgresql://localhost:5432/bako
+    user: bako
+    password: bako
 
   data:
     redis:
