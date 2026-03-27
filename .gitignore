@@ -30,3 +30,4 @@ Thumbs.db
 
 # Storage (shared volume)
 storage/
+bin/
