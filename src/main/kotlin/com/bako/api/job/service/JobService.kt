@@ -270,6 +270,70 @@ class JobService(
             .awaitSingle()
     }
 
+    @Transactional
+    suspend fun retryJob(memberId: Long, jobId: Long): TranslateResponse {
+        val originalJob = jobRepository.findByIdAndMemberId(jobId, memberId).awaitSingleOrNull()
+            ?: throw ApiException.notFound("JOB_NOT_FOUND", "Job not found: $jobId")
+
+        if (originalJob.status != JobStatus.FAILED) {
+            throw ApiException.badRequest("JOB_NOT_FAILED", "Only FAILED jobs can be retried. Current status: ${originalJob.status}")
+        }
+
+        val videoPath = originalJob.videoPath
+        if (!Path.of(videoPath).exists()) {
+            throw ApiException.notFound("FILE_NOT_FOUND", "Original video file no longer exists. Please upload again.")
+        }
+
+        val requiredMinutes = ceil(originalJob.videoDuration / 60.0).toInt()
+
+        val newJob = jobRepository.save(
+            Job(
+                memberId = memberId,
+                status = JobStatus.CREATED,
+                videoPath = videoPath,
+                originalName = originalJob.originalName,
+                videoDuration = originalJob.videoDuration,
+                creditUsed = requiredMinutes,
+                sourceLang = originalJob.sourceLang,
+                targetLang = originalJob.targetLang,
+                retryCount = (originalJob.retryCount + 1).toShort(),
+            )
+        ).awaitSingle()
+
+        val remainingBalance = try {
+            creditService.deduct(memberId, requiredMinutes, newJob.id!!)
+        } catch (e: ApiException) {
+            jobRepository.deleteById(newJob.id!!).awaitSingleOrNull()
+            throw e
+        }
+
+        val streamKey = "stream:jobs"
+        try {
+            redisTemplate.opsForStream<String, String>()
+                .add(
+                    streamKey,
+                    mapOf(
+                        "jobId" to newJob.id.toString(),
+                        "videoPath" to videoPath,
+                        "sourceLang" to originalJob.sourceLang,
+                        "targetLang" to originalJob.targetLang,
+                    )
+                )
+                .awaitSingle()
+        } catch (e: Exception) {
+            throw ApiException.internalError("MQ_PUBLISH_FAILED", "번역 큐 등록에 실패했습니다. 다시 시도해주세요.")
+        }
+
+        updateJobStatus(newJob.id!!, JobStatus.QUEUED)
+
+        return TranslateResponse(
+            jobId = newJob.id,
+            status = JobStatus.QUEUED.name,
+            creditUsed = requiredMinutes,
+            creditBalance = remainingBalance,
+        )
+    }
+
     private suspend fun updateJobStatus(jobId: Long, status: JobStatus) {
         val job = jobRepository.findById(jobId).awaitSingleOrNull() ?: return
         jobRepository.save(job.copy(status = status)).awaitSingle()

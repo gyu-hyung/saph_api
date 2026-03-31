@@ -58,6 +58,16 @@ class VideoController(
         return ApiResponse.success(result)
     }
 
+    @PostMapping("/api/video/retry/{jobId}")
+    suspend fun retryJob(
+        @PathVariable jobId: Long,
+        authentication: Authentication,
+    ): ApiResponse {
+        val memberId = authentication.name.toLong()
+        val result = jobService.retryJob(memberId, jobId)
+        return ApiResponse.success(result)
+    }
+
     @GetMapping("/api/video/status/{jobId}", produces = [MediaType.TEXT_EVENT_STREAM_VALUE])
     fun getStatus(
         @PathVariable jobId: Long,
